@@ -1,0 +1,40 @@
+# Environment variables
+.env
+.env.*
+
+# Python dependencies
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+# Distribution files
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Logs
+logs/
+*.log
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Misc
+*.swp
+*.sqlite3
+
