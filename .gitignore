@@ -37,4 +37,5 @@ Thumbs.db
 # Misc
 *.swp
 *.sqlite3
-
+# database files
+*.db
