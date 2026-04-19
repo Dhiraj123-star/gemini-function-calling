@@ -1,5 +1,6 @@
 import os
 import json
+import sqlite3
 import urllib.request
 import urllib.parse
 from dotenv import load_dotenv
@@ -60,6 +61,26 @@ def get_current_time(timezone:str="Asia/Kolkata")-> str:
     
     except Exception as e:
         return f"Error fetching time: {e}"
+
+def get_user_info(user_id: int)->str:
+    try:
+        conn = sqlite3.connect("app.db")
+        cursor= conn.cursor()
+
+        cursor.execute("SELECT id, name, email,city FROM users WHERE id= ?",(user_id,))
+
+        row =cursor.fetchone()
+
+        conn.close()
+        
+        if row:
+            return f"User {row[1]} lives in {row[3]} and their email is {row[2]}."
+        else:
+            return f"No user found with ID {user_id}."
+        
+    except Exception as e:
+        return f"Database error: {e}"
+    
 # -----------------------------
 # TOOL SCHEMA
 # -----------------------------
@@ -90,6 +111,20 @@ tools = [
                         }
                     }
                 }
+            },
+            {
+                "name": "get_user_info",
+                "description": "Fetch user details from database using user ID",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {
+                            "type": "integer",
+                            "description": "User ID to fetch details"
+                        }
+                    },
+                    "required":["user_id"]
+                }
             }
         ]
     }
@@ -105,6 +140,9 @@ def main():
         model="gemini-3.1-flash-lite-preview",
         contents=user_query,
         config={
+            "system_instruction": """
+        If the user asks about user details, profiles or database info, use the get_user_info tool. 
+""",
             "tools": tools
         }
     )
@@ -126,7 +164,10 @@ def main():
             if "timezone" not in args:
                 args["timezone"]= "Asia/Kolkata"
             tool_result = get_current_time(**args)
-        
+
+        elif function_name == "get_user_info":
+            tool_result = get_user_info(**args)
+
         print(f"\n[RESULT] {tool_result}")
 
         # send result back to gemini
