@@ -36,7 +36,30 @@ def get_current_weather(city: str, unit: str = "celsius") -> str:
     except Exception as ex:
         return f"Error: {ex}"
 
+def get_current_time(timezone:str="Asia/Kolkata")-> str:
+    """"Gets the current time (default: IST)"""
+    try:
+        url = f"https://timeapi.io/api/Time/current/zone?timeZone={urllib.parse.quote(timezone)}"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": 'GeminiToolCalling/1.0',
+                'Accept':'application/json'
+            }
+        )
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        time_str= data.get("time")
+        date_str = data.get("date")
 
+        if time_str and date_str:
+            return f"The current time in {timezone} is {time_str} on {date_str}."
+        
+        return f"Could not fetch time for {timezone}"
+    
+    except Exception as e:
+        return f"Error fetching time: {e}"
 # -----------------------------
 # TOOL SCHEMA
 # -----------------------------
@@ -53,6 +76,19 @@ tools = [
                         "unit":{"type":"string"}
                     },
                     "required":["city"]
+                }
+            },
+            {
+                "name": "get_current_time",
+                "description": "Get current time for a timezone (default IST if not provided)",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "timezone": {
+                            "type": "string",
+                            "description": "Timezone like 'Asia/Kolkata', 'Europe/London'"
+                        }
+                    }
                 }
             }
         ]
@@ -85,6 +121,11 @@ def main():
 
         if function_name == "get_current_weather":
             tool_result = get_current_weather(**args)
+        
+        elif function_name == "get_current_time":
+            if "timezone" not in args:
+                args["timezone"]= "Asia/Kolkata"
+            tool_result = get_current_time(**args)
         
         print(f"\n[RESULT] {tool_result}")
 
