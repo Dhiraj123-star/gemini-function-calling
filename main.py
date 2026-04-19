@@ -44,21 +44,20 @@ tools = [
     {
         "function_declarations": [
             {
-                "name": "get_current_weather",
-                "description": "Get current weather for a city",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "city": {"type": "string"},
-                        "unit": {"type": "string"}
+                "name":"get_current_weather",
+                "description":"Get current weather for a city",
+                "parameters":{
+                    "type":"object",
+                    "properties":{
+                        "city":{"type":"string"},
+                        "unit":{"type":"string"}
                     },
-                    "required": ["city"]
+                    "required":["city"]
                 }
             }
         ]
     }
 ]
-
 
 # -----------------------------
 # MAIN
@@ -85,8 +84,49 @@ def main():
         print(f"\n[TOOL CALL] {function_name} -> {args}")
 
         if function_name == "get_current_weather":
-            result = get_current_weather(**args)
-            print(f"\n[RESULT] {result}")
+            tool_result = get_current_weather(**args)
+        
+        print(f"\n[RESULT] {tool_result}")
+
+        # send result back to gemini
+        follow_up_response = client.models.generate_content(
+            model="gemini-3.1-flash-lite-preview",
+            contents=[
+                {
+                    "role": "user",
+                    "parts": [{"text": user_query}]
+
+                },
+                candidate.content, # model's tool call
+                {
+                    "role": "tool",
+                    "parts": [
+                        {
+                            "function_response": {
+                                "name": function_name,
+                                "response": {"result":tool_result}
+                            }
+                        }
+                    ]
+                }
+            ],
+            config ={
+                "system_instruction": """
+            You are a helpful and friendly AI assistant. 
+
+            Instructions:
+            - Always respond in a natural, human-friendly tone
+            - Do not just repeat the tool result
+            - Add helpful context (e.g., is it hot, cold ,pleasant?)
+            - Optionally suggest what the user might do (e.g, carry a jacket,stay hydrated)
+            - Keep the answer but engaging
+            - Add some humour at last but friendly 
+            
+            """
+            }
+        )
+        print("\n[Final response]")
+        print(follow_up_response.text)
 
     #  NORMAL RESPONSE
     else:
