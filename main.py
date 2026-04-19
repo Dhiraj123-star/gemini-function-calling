@@ -130,6 +130,16 @@ tools = [
     }
 ]
 
+def extract_text(response):
+    try:
+        parts = response.candidates[0].content.parts
+        return " ".join(
+            part.text for part in parts
+            if hasattr(part,"text") and part.text
+        )
+    except:
+        return "No valid response"
+
 # -----------------------------
 # MAIN
 # -----------------------------
@@ -208,7 +218,7 @@ def main():
             }
         )
         print("\n[Final response]")
-        print(follow_up_response.text)
+        print(extract_text(follow_up_response))
 
     #  NORMAL RESPONSE
     else:
