@@ -1,6 +1,11 @@
-# 📦 Gemini Weather Tool (Function Calling Demo)
+# 📦 Gemini AI Agent (Function Calling + FastAPI + SQLite)
 
-A minimal Python project demonstrating **function calling using Gemini API** with a real-world example — fetching **live weather data**.
+A minimal yet production-ready Python project demonstrating **Gemini function calling** with:
+
+* 🌦️ Weather API
+* ⏰ Time API
+* 🗄️ SQLite Database
+* 🚀 FastAPI backend
 
 ---
 
@@ -8,27 +13,35 @@ A minimal Python project demonstrating **function calling using Gemini API** wit
 
 * 🤖 **Gemini Function Calling**
 
-  * The model intelligently decides when to call a function
+  * AI decides when to call tools automatically
 
 * 🌦️ **Live Weather Data**
 
-  * Fetches real-time temperature using Open-Meteo API
+  * Fetches real-time weather using Open-Meteo API
 
-* 🔌 **Custom Tool Integration**
+* ⏰ **Current Time (IST Default)**
 
-  * Easily plug in your own Python functions as tools
+  * Retrieves timezone-based time (defaults to Asia/Kolkata)
+
+* 🗄️ **SQLite Database Integration**
+
+  * Fetch user data using AI-powered queries
+
+* 🔌 **Multi-Tool Support**
+
+  * Weather + Time + Database tools
+
+* 🧠 **AI Response Synthesis**
+
+  * Tool results → Gemini → Human-friendly response
+
+* 🚀 **FastAPI Endpoint**
+
+  * Exposes AI agent via `/ask` API
 
 * 🔑 **Secure API Key Handling**
 
   * Uses `.env` with `python-dotenv`
-
-* ⚡ **Lightweight & Minimal**
-
-  * No frameworks, no complexity — pure Python
-
-* 🧠 **AI-Driven Execution**
-
-  * User query → Gemini → Tool decision → Execution → Result
 
 ---
 
@@ -36,7 +49,14 @@ A minimal Python project demonstrating **function calling using Gemini API** wit
 
 ```bash
 .
-├── main.py
+├── app/
+│   ├── main.py        # FastAPI entrypoint
+│   ├── agent.py       # Gemini + tool calling logic
+│   ├── tools.py       # All tool functions
+│   ├── schemas.py     # Request/response models
+│
+├── init_db.py         # Initialize SQLite DB
+├── app.db
 ├── .env
 └── README.md
 ```
@@ -48,12 +68,12 @@ A minimal Python project demonstrating **function calling using Gemini API** wit
 ### 1. Install dependencies
 
 ```bash
-pip install google-genai python-dotenv
+pip install google-genai python-dotenv fastapi uvicorn
 ```
 
-### 2. Add your API key
+---
 
-Create a `.env` file:
+### 2. Add your API key
 
 ```env
 GEMINI_API_KEY=your_api_key_here
@@ -61,47 +81,64 @@ GEMINI_API_KEY=your_api_key_here
 
 ---
 
-## ▶️ Run
+### 3. Initialize database
 
 ```bash
-python main.py
+python init_db.py
 ```
 
-Example:
+---
+
+## ▶️ Run API
 
 ```bash
-Ask something: weather in London
+uvicorn app.main:app --reload
+```
+
+---
+
+## 🧪 Test API
+
+### Endpoint:
+
+```bash
+POST /ask
+```
+
+### Request:
+
+```json
+{
+  "query": "weather in London"
+}
+```
+
+### Example Queries:
+
+```bash
+weather in Delhi
+time now
+user id 1
 ```
 
 ---
 
 ## 🧠 How It Works
 
-1. User enters a query
-2. Gemini analyzes the request
-3. If needed, it triggers the `get_current_weather` function
-4. The function fetches real-time data
-5. Result is returned to the user
+1. User sends query to FastAPI
+2. Gemini analyzes intent
+3. Decides whether to call a tool
+4. Tool executes (API / DB)
+5. Result sent back to Gemini
+6. Gemini generates final response
 
 ---
 
-## 🎯 Use Case
-
-This project is a **starting point for building AI agents**:
+## 🎯 Use Cases
 
 * AI Assistants
-* Tool-enabled chatbots
-* Automation systems
 * Backend AI services
+* Tool-enabled chat systems
+* Internal data retrieval systems
 
 ---
-
-## 🚧 Future Improvements
-
-* Multiple tools (news, currency, time)
-* FastAPI integration
-* Multi-step tool chaining
-* Response synthesis (tool → AI → final answer)
-
----
-
