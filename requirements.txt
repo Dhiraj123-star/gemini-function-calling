@@ -3,3 +3,5 @@ python-dotenv
 fastapi
 uvicorn
 redis
+python-jose
+passlib
