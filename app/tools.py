@@ -2,6 +2,7 @@ import json
 import urllib.request
 import urllib.parse
 import sqlite3
+from app.cache import get_cache,set_cache
 
 # -----------------------------
 # TOOL FUNCTION
@@ -9,6 +10,11 @@ import sqlite3
 
 # -------- WEATHER -----------
 def get_current_weather(city: str, unit: str = "celsius") -> str:
+    cache_key = f"weather:{city.lower()}"
+    cached = get_cache(cache_key)
+    if cached:
+        print("cached hit !!")
+        return f"(cached) {cached}"
     try:
         geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=1"
         with urllib.request.urlopen(geo_url) as response:
@@ -26,7 +32,10 @@ def get_current_weather(city: str, unit: str = "celsius") -> str:
 
         temp = weather_data["current"]["temperature_2m"]
 
-        return f"Weather in {city}: {temp}°C"
+        result= f"Weather in {city}: {temp}°C"
+
+        set_cache(cache_key,result,ttl=600) # 10 min
+        return result
 
     except Exception as ex:
         return f"Error: {ex}"
@@ -34,6 +43,10 @@ def get_current_weather(city: str, unit: str = "celsius") -> str:
 # --------- TIME ----------
 def get_current_time(timezone:str="Asia/Kolkata")-> str:
     """"Gets the current time (default: IST)"""
+    cache_key = f"time:{timezone}"
+    cached = get_cache(cache_key)
+    if cached:
+        return f"(cached) {cached}"
     try:
         url = f"https://timeapi.io/api/Time/current/zone?timeZone={urllib.parse.quote(timezone)}"
         req = urllib.request.Request(
@@ -50,7 +63,9 @@ def get_current_time(timezone:str="Asia/Kolkata")-> str:
         date_str = data.get("date")
 
         if time_str and date_str:
-            return f"The current time in {timezone} is {time_str} on {date_str}."
+            result= f"The current time in {timezone} is {time_str} on {date_str}."
+            set_cache(cache_key,result,ttl=60) # 1 min
+            return result
         
         return f"Could not fetch time for {timezone}"
     
@@ -59,6 +74,12 @@ def get_current_time(timezone:str="Asia/Kolkata")-> str:
 
 # ------ DB TOOL ----------
 def get_user_info(user_id: int)->str:
+    cache_key = f"user:{user_id}"
+
+    cached= get_cache(cache_key)
+
+    if cached:
+        return f"(cached) {cached}"
     try:
         conn = sqlite3.connect("app.db")
         cursor= conn.cursor()
@@ -70,7 +91,9 @@ def get_user_info(user_id: int)->str:
         conn.close()
         
         if row:
-            return f"User {row[1]} lives in {row[3]} and their email is {row[2]}."
+            result=  f"User {row[1]} lives in {row[3]} and their email is {row[2]}."
+            set_cache(cache_key,result,ttl=300) # 5 min
+            return result
         else:
             return f"No user found with ID {user_id}."
         
