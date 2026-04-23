@@ -1,4 +1,4 @@
-# 📦 Gemini AI Agent (Function Calling + FastAPI + SQLite)
+# 📦 Gemini AI Agent (Function Calling + FastAPI + SQLite + Docker)
 
 A minimal yet production-ready Python project demonstrating **Gemini function calling** with:
 
@@ -6,6 +6,7 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 * ⏰ Time API
 * 🗄️ SQLite Database
 * 🚀 FastAPI backend
+* 🐳 Dockerized setup
 
 ---
 
@@ -39,6 +40,10 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 
   * Exposes AI agent via `/ask` API
 
+* 🐳 **Docker Support**
+
+  * Fully containerized for easy deployment
+
 * 🔑 **Secure API Key Handling**
 
   * Uses `.env` with `python-dotenv`
@@ -57,13 +62,16 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 │
 ├── init_db.py         # Initialize SQLite DB
 ├── app.db
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
 ├── .env
 └── README.md
 ```
 
 ---
 
-## ⚙️ Setup
+## ⚙️ Setup (Local)
 
 ### 1. Install dependencies
 
@@ -89,11 +97,35 @@ python init_db.py
 
 ---
 
-## ▶️ Run API
+### 4. Run API
 
 ```bash
 uvicorn app.main:app --reload
 ```
+
+---
+
+## 🐳 Run with Docker
+
+### Build & Start
+
+```bash
+docker compose up --build
+```
+
+---
+
+### Initialize DB (first time only)
+
+```bash
+docker compose run ai-agent python init_db.py
+```
+
+---
+
+### Access API
+
+👉 [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
@@ -112,6 +144,8 @@ POST /ask
   "query": "weather in London"
 }
 ```
+
+---
 
 ### Example Queries:
 
@@ -140,5 +174,21 @@ user id 1
 * Backend AI services
 * Tool-enabled chat systems
 * Internal data retrieval systems
+
+---
+
+## 🚧 Future Improvements
+
+* Redis caching
+* Authentication (JWT)
+* Async tool execution
+* Multi-step agent loop
+* Vector search (RAG)
+
+---
+
+## 🏷️ Project Name
+
+**gemini-ai-agent**
 
 ---
