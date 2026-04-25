@@ -7,6 +7,7 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 * 🗄️ SQLite Database
 * 🚀 FastAPI backend
 * 🐳 Dockerized setup
+* 🔐 JWT Authentication (Signup + Login)
 
 ---
 
@@ -48,6 +49,10 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 
   * Uses `.env` with `python-dotenv`
 
+* 🔐 **JWT Authentication**
+
+  * Signup, login, and protected routes with Bearer tokens
+
 ---
 
 ## 📂 Project Structure
@@ -55,10 +60,11 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 ```bash
 .
 ├── app/
-│   ├── main.py        # FastAPI entrypoint
+│   ├── main.py        # FastAPI entrypoint + auth routes
 │   ├── agent.py       # Gemini + tool calling logic
 │   ├── tools.py       # All tool functions
-│   ├── schemas.py     # Request/response models
+│   ├── schemas.py     # Request/response models (incl. SignupRequest)
+│   ├── auth.py        # JWT + password hashing + in-memory user store
 │
 ├── init_db.py         # Initialize SQLite DB
 ├── app.db
@@ -76,7 +82,7 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 ### 1. Install dependencies
 
 ```bash
-pip install google-genai python-dotenv fastapi uvicorn
+pip install google-genai python-dotenv fastapi uvicorn passlib python-jose
 ```
 
 ---
@@ -85,6 +91,7 @@ pip install google-genai python-dotenv fastapi uvicorn
 
 ```env
 GEMINI_API_KEY=your_api_key_here
+JWT_SECRET=your_jwt_secret_here
 ```
 
 ---
@@ -129,15 +136,48 @@ docker compose run ai-agent python init_db.py
 
 ---
 
-## 🧪 Test API
+## 🔐 Authentication Flow
 
-### Endpoint:
+### 1. Signup
+
+```bash
+POST /signup
+```
+
+```json
+{
+  "username": "john",
+  "password": "secret123"
+}
+```
+
+Returns a JWT token immediately after signup (auto-login).
+
+---
+
+### 2. Login
+
+```bash
+POST /login
+```
+
+```json
+{
+  "username": "john",
+  "password": "secret123"
+}
+```
+
+Returns a JWT token on successful login.
+
+---
+
+### 3. Use Protected Endpoint
 
 ```bash
 POST /ask
+Authorization: Bearer <your_token>
 ```
-
-### Request:
 
 ```json
 {
@@ -146,6 +186,8 @@ POST /ask
 ```
 
 ---
+
+## 🧪 Test API
 
 ### Example Queries:
 
@@ -159,12 +201,14 @@ user id 1
 
 ## 🧠 How It Works
 
-1. User sends query to FastAPI
-2. Gemini analyzes intent
-3. Decides whether to call a tool
-4. Tool executes (API / DB)
-5. Result sent back to Gemini
-6. Gemini generates final response
+1. User signs up → password hashed → JWT token returned
+2. User logs in → credentials verified → JWT token returned
+3. User sends query to `/ask` with Bearer token
+4. Token verified → Gemini analyzes intent
+5. Decides whether to call a tool
+6. Tool executes (API / DB)
+7. Result sent back to Gemini
+8. Gemini generates final response
 
 ---
 
@@ -179,16 +223,13 @@ user id 1
 
 ## 🚧 Future Improvements
 
-* Redis caching
-* Authentication (JWT)
 * Async tool execution
 * Multi-step agent loop
 * Vector search (RAG)
+* Persistent user store (PostgreSQL / SQLite)
 
 ---
 
 ## 🏷️ Project Name
 
 **gemini-ai-agent**
-
----
