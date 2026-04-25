@@ -5,9 +5,18 @@ from app.schemas import QueryRequest, QueryResponse, LoginRequest, TokenResponse
 from app.agent import run_agent
 from app.auth import authenticate_user, create_access_token, verify_token,create_user
 
-app = FastAPI()
+app = FastAPI(
+    title="Gemini Function Calling API"
+)
 
 security = HTTPBearer()
+
+# --------------
+# Root endpoint 
+# ---------------
+@app.get("/")
+def home():
+    return {"message": "Gemini Function calling API working!!"}
 
 
 # -----------------------------
