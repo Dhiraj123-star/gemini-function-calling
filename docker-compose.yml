@@ -23,6 +23,9 @@ services:
     restart: always
 
   caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
     image: caddy:2-alpine
     container_name: caddy-server
     ports:
