@@ -1,3 +1,29 @@
+{
+    # Ensure rate_limit runs before proxy
+    order rate_limit before reverse_proxy
+}
+
 myapp.localhost {
-    reverse_proxy gemini-ai-agent:8000
+    # Block requests without Authorization header
+    @noAuth {
+        not header Authorization *
+
+    }
+    respond @noAuth "UnAuthorized- Missing token" 401
+
+    # Rate limiting (per IP)
+    route {
+        rate_limit {
+            zone api_zone {
+                key {remote_host}
+                events 10
+                window 1m
+
+            }
+        }
+
+        # Forward to FastAPI
+        reverse_proxy gemini-ai-agent:8000
+    }
+
 }
