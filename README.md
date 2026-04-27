@@ -1,65 +1,103 @@
 # 📦 Gemini AI Agent (Function Calling + FastAPI + SQLite + Docker + Caddy)
 
-A minimal yet **production-ready AI backend** demonstrating **Gemini function calling** with:
+A **production-ready AI backend** demonstrating **multi-step Gemini function calling (agent loop)** with real-world integrations:
 
 * 🌦️ Weather API
 * ⏰ Time API
 * 🗄️ SQLite Database
-* 🚀 FastAPI backend
-* 🐳 Dockerized setup
-* 🔐 JWT Authentication (Signup + Login)
 * ⚡ Redis Caching
+* 🔐 JWT Authentication
 * 🌐 Caddy Reverse Proxy (HTTPS + Rate Limiting)
+* 🐳 Fully Dockerized
 
 ---
 
 ## 🚀 Features
 
-* 🤖 **Gemini Function Calling**
+### 🤖 AI Agent (Multi-Step Tool Calling)
 
-  * AI intelligently decides when to call tools
+* Gemini can **call multiple tools in sequence**
+* Supports **reasoning + chaining**
+* Example:
 
-* 🌦️ **Live Weather Data**
+  * Get user → extract city → fetch weather → respond
 
-  * Real-time weather via Open-Meteo API
+---
 
-* ⏰ **Current Time (IST Default)**
+### 🌦️ Live Weather Data
 
-  * Timezone-based time (default: Asia/Kolkata)
+* Real-time weather via Open-Meteo API
+* Cached for performance (10 min)
 
-* 🗄️ **SQLite Database Integration**
+---
 
-  * Fetch user data via AI queries
+### ⏰ Current Time (IST Default)
 
-* ⚡ **Redis Caching**
+* Timezone-aware (default: `Asia/Kolkata`)
+* Cached for 1 minute
 
-  * Caches weather, time, and DB responses for performance
+---
 
-* 🔌 **Multi-Tool Support**
+### 🗄️ SQLite Database Integration
 
-  * Weather + Time + Database tools
+* Fetch user data dynamically via AI queries
+* Cached for 5 minutes
 
-* 🧠 **AI Response Synthesis**
+---
 
-  * Tool → Gemini → Human-friendly response
+### ⚡ Redis Caching
 
-* 🚀 **FastAPI Endpoint**
+* Reduces API calls and latency
+* Improves response speed significantly
 
-  * `/ask` endpoint for AI interaction
+---
 
-* 🔐 **JWT Authentication**
+### 🔌 Multi-Tool Support
 
-  * Signup, login, and protected routes
+* Weather + Time + Database tools
+* Easily extensible
 
-* 🌐 **Caddy Reverse Proxy**
+---
 
-  * Automatic HTTPS (local TLS)
-  * Auth header enforcement
-  * Rate limiting at edge
+### 🧠 AI Response Synthesis
 
-* 🐳 **Dockerized Infrastructure**
+* Tool results → Gemini → **Human-friendly output**
+* Adds:
 
-  * Multi-service setup (FastAPI + Redis + Caddy)
+  * Context (hot/cold, suggestions)
+  * Friendly tone + light humor
+
+---
+
+### 🚀 FastAPI Backend
+
+* `/ask` → AI agent endpoint
+* Clean REST API
+
+---
+
+### 🔐 JWT Authentication
+
+* Signup + Login
+* Protected endpoints with Bearer token
+
+---
+
+### 🌐 Caddy Reverse Proxy
+
+* Automatic HTTPS (local TLS)
+* Reverse proxy to FastAPI
+* Rate limiting support
+
+---
+
+### 🐳 Dockerized Infrastructure
+
+* Multi-container setup:
+
+  * FastAPI (AI Agent)
+  * Redis (Cache)
+  * Caddy (Proxy)
 
 ---
 
@@ -68,9 +106,9 @@ A minimal yet **production-ready AI backend** demonstrating **Gemini function ca
 ```bash
 .
 ├── app/
-│   ├── main.py        # FastAPI entrypoint + auth routes
-│   ├── agent.py       # Gemini + tool calling logic
-│   ├── tools.py       # Tool functions (weather, time, DB)
+│   ├── main.py        # FastAPI + auth routes
+│   ├── agent.py       # Multi-step AI agent loop
+│   ├── tools.py       # Weather, Time, DB tools
 │   ├── schemas.py     # Request/response models
 │   ├── auth.py        # JWT + password hashing
 │   ├── cache.py       # Redis caching layer
@@ -78,7 +116,7 @@ A minimal yet **production-ready AI backend** demonstrating **Gemini function ca
 ├── init_db.py         # Initialize SQLite DB
 ├── app.db
 ├── Dockerfile
-├── Dockerfile.caddy   # Custom Caddy build (rate limit plugin)
+├── Dockerfile.caddy   # Custom Caddy (rate limit plugin)
 ├── docker-compose.yml
 ├── Caddyfile
 ├── requirements.txt
@@ -98,7 +136,7 @@ pip install google-genai python-dotenv fastapi uvicorn passlib python-jose redis
 
 ---
 
-### 2. Add environment variables
+### 2. Configure environment
 
 ```env
 GEMINI_API_KEY=your_api_key_here
@@ -149,7 +187,7 @@ docker compose run ai-agent python init_db.py
 https://myapp.localhost/docs
 ```
 
-👉 Run once to trust local TLS:
+👉 Trust local TLS:
 
 ```bash
 docker exec -it caddy-server caddy trust
@@ -159,9 +197,9 @@ docker exec -it caddy-server caddy trust
 
 ## 🔐 Authentication Flow
 
-### 1. Signup
+### Signup
 
-```bash
+```http
 POST /signup
 ```
 
@@ -176,19 +214,25 @@ POST /signup
 
 ---
 
-### 2. Login
+### Login
 
-```bash
+```http
 POST /login
 ```
 
 ---
 
-### 3. Use Protected Endpoint
+### Protected Endpoint
 
-```bash
+```http
 POST /ask
 Authorization: Bearer <token>
+```
+
+```json
+{
+  "query": "weather in London"
+}
 ```
 
 ---
@@ -199,23 +243,28 @@ Authorization: Bearer <token>
 weather in Delhi
 time now
 user id 1
+user id 1 weather
 ```
 
 ---
 
 ## 🧠 How It Works
 
-1. User signs up → password hashed → JWT issued
+1. User authenticates (JWT)
 2. Request hits **Caddy**
 
-   * Auth header check
+   * HTTPS
    * Rate limiting
-3. Request forwarded to FastAPI
+3. Forwarded to FastAPI
 4. Token verified
-5. Gemini analyzes query
-6. Calls tool if needed
-7. Tool executes (API / DB / Cache)
-8. Response synthesized and returned
+5. Gemini agent starts loop:
+
+   * Analyze query
+   * Call tools (if needed)
+   * Chain multiple tools
+6. Tool execution (API / DB / Cache)
+7. Final response synthesized
+8. Returned to user
 
 ---
 
@@ -237,15 +286,6 @@ user id 1
 * Internal data retrieval systems
 
 ---
-
-## 🚧 Future Improvements
-
-* Async tool execution
-* Multi-step agent loop
-* Vector search (RAG)
-* PostgreSQL + persistent users
-* Observability (Prometheus + Grafana)
-* Per-user rate limiting
 
 ---
 
