@@ -1,6 +1,6 @@
-# 📦 Gemini AI Agent (Function Calling + FastAPI + SQLite + Docker)
+# 📦 Gemini AI Agent (Function Calling + FastAPI + SQLite + Docker + Caddy)
 
-A minimal yet production-ready Python project demonstrating **Gemini function calling** with:
+A minimal yet **production-ready AI backend** demonstrating **Gemini function calling** with:
 
 * 🌦️ Weather API
 * ⏰ Time API
@@ -8,6 +8,8 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 * 🚀 FastAPI backend
 * 🐳 Dockerized setup
 * 🔐 JWT Authentication (Signup + Login)
+* ⚡ Redis Caching
+* 🌐 Caddy Reverse Proxy (HTTPS + Rate Limiting)
 
 ---
 
@@ -15,19 +17,23 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 
 * 🤖 **Gemini Function Calling**
 
-  * AI decides when to call tools automatically
+  * AI intelligently decides when to call tools
 
 * 🌦️ **Live Weather Data**
 
-  * Fetches real-time weather using Open-Meteo API
+  * Real-time weather via Open-Meteo API
 
 * ⏰ **Current Time (IST Default)**
 
-  * Retrieves timezone-based time (defaults to Asia/Kolkata)
+  * Timezone-based time (default: Asia/Kolkata)
 
 * 🗄️ **SQLite Database Integration**
 
-  * Fetch user data using AI-powered queries
+  * Fetch user data via AI queries
+
+* ⚡ **Redis Caching**
+
+  * Caches weather, time, and DB responses for performance
 
 * 🔌 **Multi-Tool Support**
 
@@ -35,23 +41,25 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 
 * 🧠 **AI Response Synthesis**
 
-  * Tool results → Gemini → Human-friendly response
+  * Tool → Gemini → Human-friendly response
 
 * 🚀 **FastAPI Endpoint**
 
-  * Exposes AI agent via `/ask` API
-
-* 🐳 **Docker Support**
-
-  * Fully containerized for easy deployment
-
-* 🔑 **Secure API Key Handling**
-
-  * Uses `.env` with `python-dotenv`
+  * `/ask` endpoint for AI interaction
 
 * 🔐 **JWT Authentication**
 
-  * Signup, login, and protected routes with Bearer tokens
+  * Signup, login, and protected routes
+
+* 🌐 **Caddy Reverse Proxy**
+
+  * Automatic HTTPS (local TLS)
+  * Auth header enforcement
+  * Rate limiting at edge
+
+* 🐳 **Dockerized Infrastructure**
+
+  * Multi-service setup (FastAPI + Redis + Caddy)
 
 ---
 
@@ -62,14 +70,17 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 ├── app/
 │   ├── main.py        # FastAPI entrypoint + auth routes
 │   ├── agent.py       # Gemini + tool calling logic
-│   ├── tools.py       # All tool functions
-│   ├── schemas.py     # Request/response models (incl. SignupRequest)
-│   ├── auth.py        # JWT + password hashing + in-memory user store
+│   ├── tools.py       # Tool functions (weather, time, DB)
+│   ├── schemas.py     # Request/response models
+│   ├── auth.py        # JWT + password hashing
+│   ├── cache.py       # Redis caching layer
 │
 ├── init_db.py         # Initialize SQLite DB
 ├── app.db
 ├── Dockerfile
+├── Dockerfile.caddy   # Custom Caddy build (rate limit plugin)
 ├── docker-compose.yml
+├── Caddyfile
 ├── requirements.txt
 ├── .env
 └── README.md
@@ -82,16 +93,18 @@ A minimal yet production-ready Python project demonstrating **Gemini function ca
 ### 1. Install dependencies
 
 ```bash
-pip install google-genai python-dotenv fastapi uvicorn passlib python-jose
+pip install google-genai python-dotenv fastapi uvicorn passlib python-jose redis
 ```
 
 ---
 
-### 2. Add your API key
+### 2. Add environment variables
 
 ```env
 GEMINI_API_KEY=your_api_key_here
 JWT_SECRET=your_jwt_secret_here
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
 ---
@@ -130,9 +143,17 @@ docker compose run ai-agent python init_db.py
 
 ---
 
-### Access API
+## 🌐 Access via Caddy (HTTPS)
 
-👉 [http://localhost:8000/docs](http://localhost:8000/docs)
+```bash
+https://myapp.localhost/docs
+```
+
+👉 Run once to trust local TLS:
+
+```bash
+docker exec -it caddy-server caddy trust
+```
 
 ---
 
@@ -151,7 +172,7 @@ POST /signup
 }
 ```
 
-Returns a JWT token immediately after signup (auto-login).
+👉 Returns JWT (auto-login)
 
 ---
 
@@ -161,35 +182,18 @@ Returns a JWT token immediately after signup (auto-login).
 POST /login
 ```
 
-```json
-{
-  "username": "john",
-  "password": "secret123"
-}
-```
-
-Returns a JWT token on successful login.
-
 ---
 
 ### 3. Use Protected Endpoint
 
 ```bash
 POST /ask
-Authorization: Bearer <your_token>
-```
-
-```json
-{
-  "query": "weather in London"
-}
+Authorization: Bearer <token>
 ```
 
 ---
 
-## 🧪 Test API
-
-### Example Queries:
+## 🧪 Example Queries
 
 ```bash
 weather in Delhi
@@ -201,14 +205,27 @@ user id 1
 
 ## 🧠 How It Works
 
-1. User signs up → password hashed → JWT token returned
-2. User logs in → credentials verified → JWT token returned
-3. User sends query to `/ask` with Bearer token
-4. Token verified → Gemini analyzes intent
-5. Decides whether to call a tool
-6. Tool executes (API / DB)
-7. Result sent back to Gemini
-8. Gemini generates final response
+1. User signs up → password hashed → JWT issued
+2. Request hits **Caddy**
+
+   * Auth header check
+   * Rate limiting
+3. Request forwarded to FastAPI
+4. Token verified
+5. Gemini analyzes query
+6. Calls tool if needed
+7. Tool executes (API / DB / Cache)
+8. Response synthesized and returned
+
+---
+
+## ⚡ Caching Strategy
+
+| Tool    | TTL    |
+| ------- | ------ |
+| Weather | 10 min |
+| Time    | 1 min  |
+| User DB | 5 min  |
 
 ---
 
@@ -226,10 +243,14 @@ user id 1
 * Async tool execution
 * Multi-step agent loop
 * Vector search (RAG)
-* Persistent user store (PostgreSQL / SQLite)
+* PostgreSQL + persistent users
+* Observability (Prometheus + Grafana)
+* Per-user rate limiting
 
 ---
 
 ## 🏷️ Project Name
 
 **gemini-ai-agent**
+
+---
