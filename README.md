@@ -1,85 +1,93 @@
 # 📦 Gemini AI Agent (Function Calling + FastAPI + SQLite + Docker + Caddy)
 
-A **production-ready AI backend** demonstrating **multi-step Gemini function calling (agent loop)** with real-world integrations:
-
-* 🌦️ Weather API
-* ⏰ Time API
-* 🗄️ SQLite Database
-* ⚡ Redis Caching
-* 🔐 JWT Authentication
-* 🌐 Caddy Reverse Proxy (HTTPS + Rate Limiting)
-* 🐳 Fully Dockerized
+A **production-ready AI backend** demonstrating a **multi-step Gemini agent (tool-calling loop)** with real-world integrations and infrastructure.
 
 ---
 
-## 🚀 Features
+## 🚀 Tech Stack
 
-### 🤖 AI Agent (Multi-Step Tool Calling)
+* 🤖 Gemini API (Function Calling)
+* 🚀 FastAPI
+* 🗄️ SQLite
+* ⚡ Redis
+* 🌐 Caddy (Reverse Proxy + HTTPS)
+* 🐳 Docker & Docker Compose
+* 🔐 JWT Authentication
+* ⚙️ GitHub Actions (CI/CD)
 
-* Gemini can **call multiple tools in sequence**
-* Supports **reasoning + chaining**
+---
+
+## ✨ Features
+
+### 🤖 Multi-Step AI Agent
+
+* Supports **tool chaining & reasoning**
+* Executes multiple tools sequentially
 * Example:
 
-  * Get user → extract city → fetch weather → respond
+  ```
+  user id 1 weather
+  → get_user_info → extract city → get_weather → final response
+  ```
 
 ---
 
-### 🌦️ Live Weather Data
+### 🌦️ Live Weather Tool
 
 * Real-time weather via Open-Meteo API
-* Cached for performance (10 min)
+* Cached (TTL: 10 min)
 
 ---
 
-### ⏰ Current Time (IST Default)
+### ⏰ Time Tool (IST Default)
 
-* Timezone-aware (default: `Asia/Kolkata`)
-* Cached for 1 minute
-
----
-
-### 🗄️ SQLite Database Integration
-
-* Fetch user data dynamically via AI queries
-* Cached for 5 minutes
+* Timezone-aware (`Asia/Kolkata` by default)
+* Cached (TTL: 1 min)
 
 ---
 
-### ⚡ Redis Caching
+### 🗄️ Database Tool (SQLite)
 
-* Reduces API calls and latency
-* Improves response speed significantly
+* Fetch user data via natural language
+* Cached (TTL: 5 min)
 
 ---
 
-### 🔌 Multi-Tool Support
+### ⚡ Redis Caching Layer
 
-* Weather + Time + Database tools
-* Easily extensible
+* Reduces latency & external API calls
+* Improves performance significantly
+
+---
+
+### 🔌 Extensible Tool System
+
+* Plug-and-play tool architecture
+* Easily add new tools
 
 ---
 
 ### 🧠 AI Response Synthesis
 
-* Tool results → Gemini → **Human-friendly output**
-* Adds:
+* Converts raw tool output into:
 
-  * Context (hot/cold, suggestions)
+  * Natural responses
+  * Context-aware suggestions
   * Friendly tone + light humor
 
 ---
 
 ### 🚀 FastAPI Backend
 
-* `/ask` → AI agent endpoint
 * Clean REST API
+* `/ask` → AI interaction endpoint
 
 ---
 
 ### 🔐 JWT Authentication
 
-* Signup + Login
-* Protected endpoints with Bearer token
+* Signup & Login
+* Protected endpoints using Bearer tokens
 
 ---
 
@@ -91,13 +99,24 @@ A **production-ready AI backend** demonstrating **multi-step Gemini function cal
 
 ---
 
-### 🐳 Dockerized Infrastructure
+### 🐳 Dockerized Architecture
 
 * Multi-container setup:
 
   * FastAPI (AI Agent)
   * Redis (Cache)
   * Caddy (Proxy)
+
+---
+
+### ⚙️ CI/CD (GitHub Actions)
+
+* Auto build & push Docker image
+* DockerHub integration:
+
+  ```
+  dhiraj918106/gemini-ai-agent
+  ```
 
 ---
 
@@ -110,13 +129,13 @@ A **production-ready AI backend** demonstrating **multi-step Gemini function cal
 │   ├── agent.py       # Multi-step AI agent loop
 │   ├── tools.py       # Weather, Time, DB tools
 │   ├── schemas.py     # Request/response models
-│   ├── auth.py        # JWT + password hashing
-│   ├── cache.py       # Redis caching layer
+│   ├── auth.py        # JWT + hashing
+│   ├── cache.py       # Redis layer
 │
-├── init_db.py         # Initialize SQLite DB
+├── init_db.py
 ├── app.db
 ├── Dockerfile
-├── Dockerfile.caddy   # Custom Caddy (rate limit plugin)
+├── Dockerfile.caddy
 ├── docker-compose.yml
 ├── Caddyfile
 ├── requirements.txt
@@ -126,7 +145,7 @@ A **production-ready AI backend** demonstrating **multi-step Gemini function cal
 
 ---
 
-## ⚙️ Setup (Local)
+## ⚙️ Local Setup
 
 ### 1. Install dependencies
 
@@ -147,7 +166,7 @@ REDIS_PORT=6379
 
 ---
 
-### 3. Initialize database
+### 3. Initialize DB
 
 ```bash
 python init_db.py
@@ -165,7 +184,7 @@ uvicorn app.main:app --reload
 
 ## 🐳 Run with Docker
 
-### Build & Start
+### Start services
 
 ```bash
 docker compose up --build
@@ -173,7 +192,7 @@ docker compose up --build
 
 ---
 
-### Initialize DB (first time only)
+### Initialize DB (first run)
 
 ```bash
 docker compose run ai-agent python init_db.py
@@ -181,9 +200,11 @@ docker compose run ai-agent python init_db.py
 
 ---
 
-## 🌐 Access via Caddy (HTTPS)
+## 🌐 Access API
 
-```bash
+👉 Swagger Docs:
+
+```
 https://myapp.localhost/docs
 ```
 
@@ -209,8 +230,6 @@ POST /signup
   "password": "secret123"
 }
 ```
-
-👉 Returns JWT (auto-login)
 
 ---
 
@@ -257,13 +276,13 @@ user id 1 weather
    * Rate limiting
 3. Forwarded to FastAPI
 4. Token verified
-5. Gemini agent starts loop:
+5. Gemini agent loop starts:
 
-   * Analyze query
-   * Call tools (if needed)
-   * Chain multiple tools
-6. Tool execution (API / DB / Cache)
-7. Final response synthesized
+   * Understand query
+   * Call tools (multi-step)
+   * Chain results
+6. Tools execute (API / DB / Cache)
+7. Final response generated
 8. Returned to user
 
 ---
@@ -283,9 +302,7 @@ user id 1 weather
 * AI Assistants
 * Backend AI services
 * Tool-enabled chat systems
-* Internal data retrieval systems
-
----
+* Internal knowledge systems
 
 ---
 
